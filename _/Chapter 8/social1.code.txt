@@ -1,0 +1,12 @@
+# NOTE: To run this code, start Neo4j with the **social1.db** database
+#       and run the snippets on the Neo4j web console.
+# =================================================================
+# Code to recommend possible 'dates' based on Collaborative Filtering
+# =================================================================
+
+START Person = node(2)
+MATCH Person-[IS_INTERESTED_BY]->someone<-[:IS_INTERESTED_BY]-otherguy-[:IS_INTERESTED_BY]->recommendations
+WHERE not(Paul = otherguy)
+RETURN count(*) AS PriorityWeight, recommendations.name AS name
+ORDER BY PriorityWeight DESC, name DESC;
+

@@ -1,0 +1,30 @@
+# NOTE: To run this code, start Neo4j with the **social2.db** database
+#       and run the snippets on the Neo4j web console.
+# ===============================================================
+# Simple code to recommend people in same city
+# ===============================================================
+
+START n = node:users_index(name = 'Albert')
+MATCH n-[:has]->interest<-[:has]-someone-[:lives_in]->city<-[:lives_in]-n
+WHERE not(n = someone)
+RETURN someone, city
+
+# ===============================================================
+# A More Complex Recommendation Pattern
+# ===============================================================
+
+START me=node:users_index(name = 'Albert')
+MATCH me-[:lives_in]->city<-[:lives_in]-person
+WHERE me.orientation = person.orientation AND
+    ((me.gender <> person.gender AND me.orientation = "straight")) AND
+      me-[:wants]->()<-[:has]-person AND
+      me-[:has]->()<-[:wants]-person
+WITH DISTINCT city.name AS city_name, person, me
+MATCH  me-[:wants]->attributes<-[:has]-person-[:wants]->requirements<-[:has]-me
+RETURN city_name, person.name AS person_name,
+       COLLECT(attributes.name) AS my_interests,
+       COLLECT(requirements.name) AS their_interests,
+       COUNT(attributes) AS matching_wants,
+      COUNT(requirements) AS matching_has
+ORDER BY (COUNT(attributes)/(1.0 / COUNT(requirements))) DESC
+LIMIT 10
